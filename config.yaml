@@ -1,0 +1,3 @@
+tr_path: data/supervised/train.txt
+va_path: data/supervised/dev.txt
+te_path: data/supervised/test.txt
