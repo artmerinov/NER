@@ -12,8 +12,6 @@ Sequence tagging task.
 
 [Bidirectional LSTM-CRF Models for Sequence Tagging](https://arxiv.org/pdf/1508.01991.pdf)
 
-<!-- <p align="left">
+<p align="left">
   <img src="img/bi-lstm-crf.png" width="60%" />
-</p> -->
-
-![bilstm_crf](/img/bi-lstm-crf.png)
+</p>
