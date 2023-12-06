@@ -13,7 +13,7 @@ class Config:
             setattr(self, key.upper(), value)
 
 
-def set_random_seed(seed: int):
+def set_random_seed(seed: int) -> None:
     """
     Fixes random state for reproducibility. 
     """
@@ -25,7 +25,7 @@ def set_random_seed(seed: int):
     torch.backends.cudnn.benchmark = False
 
 
-def IO2BIO(tags: List[str]):
+def IO2BIO(tags: List[str]) -> List[str]:
     """
     Convert IO format to BIO format 
     (the format expected by seqeval).
