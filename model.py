@@ -5,12 +5,12 @@ from torchcrf import CRF
 
 class BiLSTM_CRF(nn.Module):
     def __init__(
-            self, 
-            embed_size: int, 
-            hidden_size: int, 
-            dropout: float, 
-            token_voc_size: int, 
-            tag_voc_size: int
+        self, 
+        embed_size: int, 
+        hidden_size: int, 
+        dropout: float, 
+        token_voc_size: int, 
+        tag_voc_size: int
     ) -> None:
         super(BiLSTM_CRF, self).__init__()
         
@@ -27,13 +27,13 @@ class BiLSTM_CRF(nn.Module):
         
         self.init_weights()
 
-    def forward(self, x: torch.Tensor, tags: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         embedding = self.token_embedding(x)
         outputs, hidden = self.lstm(embedding)
         outputs = self.dropout(outputs)
         outputs = self.fc(outputs)
         outputs = self.crf.decode(outputs)
-        return outputs
+        return torch.tensor(outputs)
     
     def init_weights(self):
         """
@@ -50,7 +50,6 @@ class BiLSTM_CRF(nn.Module):
                 nn.init.zeros_(p)
                 print(f'{name:<30} initialized b with zero   {" "*10} parameters #: {p.numel()}', flush=True)
 
-
     def loss_fn(self, x: torch.Tensor, tags: torch.Tensor) -> torch.Tensor:
         """
         Calculates negative log-likelihood loss (NLL).
@@ -63,12 +62,11 @@ class BiLSTM_CRF(nn.Module):
         mask = (tags > 0).bool()
         return - self.crf(outputs, tags, mask=mask)
     
-
     def regularization_loss_fn(self, lam=1e-3, alpha=0.5):
         """
         Calculates regularization loss function.
         """
-        weigths = [ 
+        weigths = [
             self.token_embedding.weight,
             self.lstm.weight_ih_l0,
             self.lstm.weight_hh_l0,
