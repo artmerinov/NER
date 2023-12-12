@@ -1,17 +1,11 @@
 import torch
 import torch.nn as nn
 from torchcrf import CRF
+from typing import List
 
 
 class BiLSTM_CRF(nn.Module):
-    def __init__(
-        self, 
-        embed_size: int, 
-        hidden_size: int, 
-        dropout: float, 
-        token_voc_size: int, 
-        tag_voc_size: int
-    ) -> None:
+    def __init__(self, embed_size: int, hidden_size: int, dropout: float, token_voc_size: int, tag_voc_size: int) -> None:
         super(BiLSTM_CRF, self).__init__()
         
         self.embed_size = embed_size
@@ -29,29 +23,27 @@ class BiLSTM_CRF(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
-        Predicts label sequence.
+        Predicts emission scores.
         """
         embedding = self.token_embedding(x)
         outputs, hidden = self.lstm(embedding)
         outputs = self.dropout(outputs)
         outputs = self.fc(outputs)
-        outputs = self.crf.decode(outputs)
-        return torch.tensor(outputs)
-
-    def loss_fn(self, 
-                x: torch.Tensor, 
-                tags: torch.Tensor, 
-                mask: torch.Tensor) -> torch.Tensor:
+        return outputs
+    
+    def decode(self, emission_scores: torch.Tensor) -> List[float]:
+        """
+        Returns sequence of labels.
+        """
+        return self.crf.decode(emission_scores)
+        
+    def loss_fn(self, emission_scores: torch.Tensor, tags: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
         """
         Calculates negative log-likelihood loss (NLL).
         """
-        embedding = self.token_embedding(x)
-        outputs, hidden = self.lstm(embedding)
-        outputs = self.dropout(outputs)
-        outputs = self.fc(outputs)
-        return -self.crf(outputs, tags, mask=mask)
+        return -self.crf(emission_scores, tags, mask=mask)
     
-    def regularization_loss_fn(self, lam=1e-3, alpha=0.5):
+    def regularization_loss_fn(self, lam: float = 1e-3, alpha: float = 0.5):
         """
         Calculates regularization loss function.
         """
@@ -69,14 +61,14 @@ class BiLSTM_CRF(nn.Module):
         return loss
     
     @staticmethod
-    def _l1_penalty(v):
+    def _l1_penalty(v: torch.Tensor) -> torch.Tensor:
         return torch.sum(torch.abs(v))
     
     @staticmethod
-    def _l2_penalty(v):
+    def _l2_penalty(v: torch.Tensor) -> torch.Tensor:
         return torch.sum(v**2)
         
-    def init_weights(self):
+    def init_weights(self) -> None:
         """
         Xavier/Glorot initialization for weights and 
         zero initialization for biases.
