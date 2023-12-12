@@ -1,0 +1,11 @@
+{
+    "O": 1,
+    "art": 2,
+    "building": 3,
+    "event": 4,
+    "location": 5,
+    "organization": 6,
+    "other": 7,
+    "person": 8,
+    "product": 9
+}

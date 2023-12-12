@@ -47,16 +47,8 @@ class BiLSTM_CRF(nn.Module):
         """
         Calculates regularization loss function.
         """
-        weigths = [
-            self.token_embedding.weight,
-            self.lstm.weight_ih_l0,
-            self.lstm.weight_hh_l0,
-            self.lstm.weight_ih_l0_reverse,
-            self.lstm.weight_hh_l0_reverse,
-            self.fc.weight,
-            self.crf.transitions
-        ]
-        elastic = torch.tensor([alpha * self._l1_penalty(w) + (1 - alpha) * self._l2_penalty(w) for w in weigths])
+        learnable_weights = [p for p in self.parameters() if p.requires_grad and p.dim() > 1]
+        elastic = torch.tensor([alpha * self._l1_penalty(w) + (1 - alpha) * self._l2_penalty(w) for w in learnable_weights])
         loss = lam * torch.sum(elastic)
         return loss
     

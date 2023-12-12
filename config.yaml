@@ -1,3 +1,11 @@
 tr_path: data/supervised/train.txt
 va_path: data/supervised/dev.txt
 te_path: data/supervised/test.txt
+
+batch_size: 128
+lr: 0.0005
+
+# model params
+embed_size: 100
+hidden_size: 256
+dropout: 0.5
