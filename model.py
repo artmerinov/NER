@@ -28,29 +28,20 @@ class BiLSTM_CRF(nn.Module):
         self.init_weights()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        Predicts label sequence.
+        """
         embedding = self.token_embedding(x)
         outputs, hidden = self.lstm(embedding)
         outputs = self.dropout(outputs)
         outputs = self.fc(outputs)
         outputs = self.crf.decode(outputs)
         return torch.tensor(outputs)
-    
-    def init_weights(self):
-        """
-        Xavier/Glorot initialization for weights and 
-        zero initialization for biases.
-        """
-        learnable_named_parameters = [(name, p) for name, p in self.named_parameters() if p.requires_grad]
-        
-        for name, p in learnable_named_parameters:
-            if p.dim() > 1:
-                nn.init.xavier_uniform_(p)
-                print(f'{name:<30} initialized w with Xavier {" "*10} parameters #: {p.numel()}', flush=True)
-            else:
-                nn.init.zeros_(p)
-                print(f'{name:<30} initialized b with zero   {" "*10} parameters #: {p.numel()}', flush=True)
 
-    def loss_fn(self, x: torch.Tensor, tags: torch.Tensor) -> torch.Tensor:
+    def loss_fn(self, 
+                x: torch.Tensor, 
+                tags: torch.Tensor, 
+                mask: torch.Tensor) -> torch.Tensor:
         """
         Calculates negative log-likelihood loss (NLL).
         """
@@ -58,9 +49,7 @@ class BiLSTM_CRF(nn.Module):
         outputs, hidden = self.lstm(embedding)
         outputs = self.dropout(outputs)
         outputs = self.fc(outputs)
-        # find the mask for ignoring padding (index 0)
-        mask = (tags > 0).bool()
-        return - self.crf(outputs, tags, mask=mask)
+        return -self.crf(outputs, tags, mask=mask)
     
     def regularization_loss_fn(self, lam=1e-3, alpha=0.5):
         """
@@ -86,3 +75,18 @@ class BiLSTM_CRF(nn.Module):
     @staticmethod
     def _l2_penalty(v):
         return torch.sum(v**2)
+        
+    def init_weights(self):
+        """
+        Xavier/Glorot initialization for weights and 
+        zero initialization for biases.
+        """
+        learnable_named_parameters = [(name, p) for name, p in self.named_parameters() if p.requires_grad]
+        
+        for name, p in learnable_named_parameters:
+            if p.dim() > 1:
+                nn.init.xavier_uniform_(p)
+                print(f'{name:<30} initialized w with Xavier {" "*10} parameters #: {p.numel()}', flush=True)
+            else:
+                nn.init.zeros_(p)
+                print(f'{name:<30} initialized b with zero   {" "*10} parameters #: {p.numel()}', flush=True)
