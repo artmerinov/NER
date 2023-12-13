@@ -1,6 +1,7 @@
 import yaml
 import torch
 import random
+import json
 import numpy as np
 from typing import List
 
@@ -48,3 +49,9 @@ def IO2BIO(tags: List[str]) -> List[str]:
             current_entity = None
             
     return converted_sequence
+
+
+def load_ner_config(file_path):
+    with open(file_path, 'r') as file:
+        ner_config = json.load(file)
+    return ner_config
