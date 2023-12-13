@@ -26,31 +26,6 @@ def set_random_seed(seed: int) -> None:
     torch.backends.cudnn.benchmark = False
 
 
-def IO2BIO(tags: List[str]) -> List[str]:
-    """
-    Convert IO format to BIO format 
-    (the format expected by seqeval).
-    """
-    converted_sequence = []
-    current_entity = None
-
-    for tag in tags:
-        if tag != 'O':
-            if current_entity is None:
-                converted_sequence.append('B-' + tag)
-                current_entity = tag
-            elif current_entity == tag:
-                converted_sequence.append('I-' + tag)
-            else:
-                converted_sequence.append('B-' + tag)
-                current_entity = tag
-        else:
-            converted_sequence.append('O')
-            current_entity = None
-            
-    return converted_sequence
-
-
 def load_ner_config(file_path):
     with open(file_path, 'r') as file:
         ner_config = json.load(file)
