@@ -27,7 +27,6 @@ class BiLSTM_CRF(nn.Module):
         """
         embedding = self.token_embedding(x)
         outputs, hidden = self.lstm(embedding)
-        outputs = outputs + embedding
         outputs = self.dropout(outputs)
         outputs = self.fc(outputs)
         return outputs
