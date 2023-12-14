@@ -5,8 +5,12 @@ te_path: data/supervised/test.txt
 seq_len: 100
 batch_size: 128
 lr: 0.0005
+reg_lambda: 0.001
+reg_alpha: 0.5
+max_grad_norm: 100
+num_epochs: 10
 
-# model params
+# network architeecture
 embed_size: 100
 hidden_size: 256
 dropout: 0.5

@@ -3,7 +3,7 @@ import torch
 import random
 import json
 import numpy as np
-from typing import List
+from typing import Dict
 
 
 class Config:
@@ -26,7 +26,10 @@ def set_random_seed(seed: int) -> None:
     torch.backends.cudnn.benchmark = False
 
 
-def load_ner_config(file_path):
+def load_ner_config(file_path: str) -> Dict[str, int]:
+    """
+    Loads tag dictionary.
+    """
     with open(file_path, 'r') as file:
         ner_config = json.load(file)
     return ner_config

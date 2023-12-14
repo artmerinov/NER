@@ -1,4 +1,10 @@
-def get_tag_colors():
+from typing import List, Dict
+
+
+def get_tag_colors() -> Dict[str, str]:
+    """
+    Custom tag-color mapping.
+    """
     tag_colors = {
         "art": '#1f77b4',
         "building": '#ff7f0e',
@@ -12,7 +18,10 @@ def get_tag_colors():
     return tag_colors
 
 
-def highlight_entities(tokens, ner_tags, font_size=18):
+def highlight_entities(tokens: List[str], ner_tags: List[str], font_size: int = 18) -> str:
+    """
+    Outputs text with highlighted tags using HTML style.
+    """
     highlighted_text = ""
     current_entity = None
     tag_colors = get_tag_colors()
