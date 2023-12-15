@@ -1,4 +1,29 @@
 from typing import List, Dict
+import matplotlib.pyplot as plt
+
+
+def plot_classification_report(tag_names: List[str], tag_scores: List[float]) -> None:
+
+    plt.figure(figsize=(14, 4))
+    bars = plt.bar(tag_names, tag_scores, color='slateblue', width=0.8, edgecolor='black')
+
+    # annotate
+    for bar, score in zip(bars, tag_scores):
+        plt.text(
+            x=bar.get_x() + bar.get_width() / 2, 
+            y=bar.get_height() + 0.02, 
+            s=f'{score:.2f}', 
+            ha='center', 
+            va='bottom',
+            rotation=90,
+            size=8
+        )
+    plt.xticks(rotation=90, size=8)
+    plt.title('Precision of Tags')
+    plt.xlabel('Tags')
+    plt.ylabel('Precision')
+    plt.ylim(0, 1)
+    plt.show()
 
 
 def get_tag_colors() -> Dict[str, str]:

@@ -11,6 +11,7 @@ __pycache__/
 data/
 runs/
 weights/
+artefacts/
 
 # OS generated files
 .DS_Store

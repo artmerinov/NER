@@ -28,29 +28,45 @@ def io2df(filepath: str) -> pd.DataFrame:
 
     with open(filepath, "r", encoding="utf-8") as f:
         
-        tokens, tags = [], []
+        tokens = []
+        tags_fine_grained = []
+        tags_coarse_grained = []
+
         records = []
 
         for line in tqdm(f, total=num_lines):
             line = line.strip().split()
 
             if line:
-                token, fine_tag = line
-                tag = fine_tag.split("-")[0]
+                token, tag_fine_grained = line
+                tag_coarse_grained = tag_fine_grained.split("-")[0]
 
                 tokens.append(token)
-                tags.append(tag)
+                tags_fine_grained.append(tag_fine_grained)
+                tags_coarse_grained.append(tag_coarse_grained)
 
             # end of sentence
             elif tokens:
-                record = {"id": id, "tokens": tokens, "tags": tags}
+                record = {
+                    "id": id, 
+                    "tokens": tokens, 
+                    "tags_fine_grained": tags_fine_grained, 
+                    'tags_coarse_grained': tags_coarse_grained
+                }
                 records.append(record)
-                tokens, tags = [], []
+                tokens = []
+                tags_fine_grained = []
+                tags_coarse_grained = []
                 id += 1
-
+        
         # take the last sentence
         if tokens:
-            record = {"id": id, "tokens": tokens, "tags": tags,}
+            record = {
+                "id": id, 
+                "tokens": tokens, 
+                "tags_fine_grained": tags_fine_grained, 
+                'tags_coarse_grained': tags_coarse_grained
+            }
             records.append(record)
 
     titles = pd.DataFrame(records)
