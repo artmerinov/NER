@@ -1,6 +1,6 @@
 import pandas as pd
-import numpy as np
 from tqdm import tqdm
+import torch
 from torch.utils.data import Dataset
 from typing import List, Dict
 
@@ -9,12 +9,12 @@ class NERDataset(Dataset):
     def __init__(self, data: pd.DataFrame) -> None:
         self.data = data
 
-    def __getitem__(self, idx: int) -> Dict[str, np.ndarray]:
+    def __getitem__(self, idx: int) -> Dict[str, torch.Tensor]:
         return {
-            'tokens_ids': np.array(self.data['tokens_ids'][idx]),
-            'tags_ids': np.array(self.data['tags_ids'][idx]),
+            'tokens_ids': torch.tensor(self.data['tokens_ids'][idx]),
+            'tags_ids': torch.tensor(self.data['tags_ids'][idx]),
         }
-
+    
     def __len__(self) -> int:
         return len(self.data)
 

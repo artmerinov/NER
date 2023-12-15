@@ -5,7 +5,12 @@ from typing import List
 
 
 class BiLSTM_CRF(nn.Module):
-    def __init__(self, embed_size: int, hidden_size: int, dropout: float, token_voc_size: int, tag_voc_size: int) -> None:
+    def __init__(self, 
+                 embed_size: int, 
+                 hidden_size: int, 
+                 dropout: float, 
+                 token_voc_size: int, 
+                 tag_voc_size: int) -> None:
         super(BiLSTM_CRF, self).__init__()
         
         self.embed_size = embed_size
@@ -13,11 +18,23 @@ class BiLSTM_CRF(nn.Module):
         self.token_voc_size = token_voc_size
         self.tag_voc_size = tag_voc_size
         
-        self.token_embedding = nn.Embedding(self.token_voc_size, self.embed_size)
+        self.token_embedding = nn.Embedding(
+            num_embeddings=self.token_voc_size, 
+            embedding_dim=self.embed_size
+        )
         self.dropout = nn.Dropout(dropout)
-        self.lstm = nn.LSTM(self.embed_size, self.hidden_size // 2, num_layers=1, bidirectional=True, batch_first=True)
-        self.fc = nn.Linear(self.hidden_size, self.tag_voc_size)
-        self.crf = CRF(self.tag_voc_size, batch_first=True)
+        self.lstm = nn.LSTM(
+            input_size=self.embed_size, 
+            hidden_size=self.hidden_size // 2, 
+            num_layers=1, 
+            bidirectional=True, 
+            batch_first=True
+        )
+        self.fc = nn.Linear(
+            in_features=self.hidden_size, 
+            out_features=self.tag_voc_size
+        )
+        self.crf = CRF(num_tags=self.tag_voc_size, batch_first=True)
         
         self.init_weights()
 

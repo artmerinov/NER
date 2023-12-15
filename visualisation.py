@@ -31,7 +31,7 @@ def highlight_entities(tokens: List[str], ner_tags: List[str], font_size: int = 
             if current_entity:
                 highlighted_text += f"</span> ({current_entity}) "
             entity_type = tag[2:]
-            color = tag_colors.get(entity_type, 'grey')  # Default to grey if the color is not found
+            color = tag_colors.get(entity_type, 'grey')
             highlighted_text += f"<span style='color:{color}'>{token} "
             current_entity = entity_type
         elif tag == "O":
