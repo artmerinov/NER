@@ -22,14 +22,15 @@ class BiLSTM_CRF(nn.Module):
             num_embeddings=self.token_voc_size, 
             embedding_dim=self.embed_size
         )
-        self.dropout = nn.Dropout(dropout)
         self.lstm = nn.LSTM(
             input_size=self.embed_size, 
             hidden_size=self.hidden_size // 2, 
             num_layers=1, 
             bidirectional=True, 
-            batch_first=True
+            batch_first=True,
+            bias=False
         )
+        self.dropout = nn.Dropout(dropout)
         self.fc = nn.Linear(
             in_features=self.hidden_size, 
             out_features=self.tag_voc_size
@@ -58,24 +59,15 @@ class BiLSTM_CRF(nn.Module):
         """
         Calculates negative log-likelihood loss (NLL).
         """
-        return -self.crf(emission_scores, tags, mask=mask)
+        return -self.crf(emission_scores, tags, mask=mask, reduction='mean')
     
-    def regularization_loss_fn(self, lam: float = 1e-3, alpha: float = 0.5):
+    def regularization_loss_fn(self, lam: float) -> float:
         """
         Calculates regularization loss function.
         """
         learnable_weights = [p for p in self.parameters() if p.requires_grad and p.dim() > 1]
-        elastic = torch.tensor([alpha * self._l1_penalty(w) + (1 - alpha) * self._l2_penalty(w) for w in learnable_weights])
-        loss = lam * torch.sum(elastic)
+        loss = lam * torch.sum(torch.tensor([torch.sum(w**2) for w in learnable_weights]))
         return loss
-    
-    @staticmethod
-    def _l1_penalty(v: torch.Tensor) -> torch.Tensor:
-        return torch.sum(torch.abs(v))
-    
-    @staticmethod
-    def _l2_penalty(v: torch.Tensor) -> torch.Tensor:
-        return torch.sum(v**2)
         
     def init_weights(self) -> None:
         """
