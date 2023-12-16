@@ -9,17 +9,17 @@ class BiLSTM_CRF(nn.Module):
                  embed_size: int, 
                  hidden_size: int, 
                  dropout: float, 
-                 token_voc_size: int, 
+                 word_voc_size: int, 
                  tag_voc_size: int) -> None:
         super(BiLSTM_CRF, self).__init__()
         
         self.embed_size = embed_size
         self.hidden_size = hidden_size
-        self.token_voc_size = token_voc_size
+        self.word_voc_size = word_voc_size
         self.tag_voc_size = tag_voc_size
         
-        self.token_embedding = nn.Embedding(
-            num_embeddings=self.token_voc_size, 
+        self.word_embedding = nn.Embedding(
+            num_embeddings=self.word_voc_size, 
             embedding_dim=self.embed_size
         )
         self.lstm = nn.LSTM(
@@ -39,11 +39,11 @@ class BiLSTM_CRF(nn.Module):
         
         self.init_weights()
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, word_ids: torch.Tensor) -> torch.Tensor:
         """
         Predicts emission scores.
         """
-        embedding = self.token_embedding(x)
+        embedding = self.word_embedding(word_ids)
         outputs, hidden = self.lstm(embedding)
         outputs = self.dropout(outputs)
         outputs = self.fc(outputs)

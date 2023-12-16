@@ -1,5 +1,6 @@
 import pandas as pd
 from tqdm import tqdm
+from collections import Counter
 import torch
 from torch.utils.data import Dataset
 from typing import List, Dict
@@ -11,8 +12,8 @@ class NERDataset(Dataset):
 
     def __getitem__(self, idx: int) -> Dict[str, torch.Tensor]:
         return {
-            'tokens_ids': torch.tensor(self.data['tokens_ids'][idx]),
-            'tags_ids': torch.tensor(self.data['tags_ids'][idx]),
+            'word_ids': torch.tensor(self.data['word_ids'][idx]),
+            'tag_ids': torch.tensor(self.data['tag_ids'][idx]),
         }
     
     def __len__(self) -> int:
@@ -23,47 +24,46 @@ def io2df(filepath: str) -> pd.DataFrame:
     """
     Reads file in IO format and transform it into pandas dataframe.
     """
-    num_lines = sum(1 for _ in open(filepath, encoding="utf-8"))
     id = 0
 
     with open(filepath, "r", encoding="utf-8") as f:
         
-        tokens = []
+        words = []
         tags_fine_grained = []
         tags_coarse_grained = []
 
         records = []
 
-        for line in tqdm(f, total=num_lines):
+        for line in f:
             line = line.strip().split()
 
             if line:
-                token, tag_fine_grained = line
+                word, tag_fine_grained = line
                 tag_coarse_grained = tag_fine_grained.split("-")[0]
 
-                tokens.append(token)
+                words.append(word)
                 tags_fine_grained.append(tag_fine_grained)
                 tags_coarse_grained.append(tag_coarse_grained)
 
             # end of sentence
-            elif tokens:
+            elif words:
                 record = {
                     "id": id, 
-                    "tokens": tokens, 
+                    "words": words, 
                     "tags_fine_grained": tags_fine_grained, 
                     'tags_coarse_grained': tags_coarse_grained
                 }
                 records.append(record)
-                tokens = []
+                words = []
                 tags_fine_grained = []
                 tags_coarse_grained = []
                 id += 1
         
         # take the last sentence
-        if tokens:
+        if words:
             record = {
                 "id": id, 
-                "tokens": tokens, 
+                "words": words, 
                 "tags_fine_grained": tags_fine_grained, 
                 'tags_coarse_grained': tags_coarse_grained
             }
@@ -71,6 +71,51 @@ def io2df(filepath: str) -> pd.DataFrame:
 
     titles = pd.DataFrame(records)
     return titles
+
+
+def make_word_vocab(filepath: str, support: int = 5) -> Dict[str, int]:
+    """
+    Creates word-level vocabulary.
+    """
+    word_cntr = Counter()
+
+    with open(filepath, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip().split()
+            if line:
+                word, _ = line
+                word_cntr[word] += 1
+
+    top_words = [w for w, cnt in word_cntr.most_common() if cnt >= support]
+
+    word2idx = {token: i + 2 for i, token in enumerate(top_words)}
+    word2idx['PAD'] = 0
+    word2idx['UKN'] = 1
+    
+    return word2idx
+
+
+def make_char_vocab(filepath: str, support: int = 100) -> Dict[str, int]:
+    """
+    Creates character-level vocabulary.
+    """
+    char_cntr = Counter()
+
+    with open(filepath, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip().split()
+            if line:
+                word, _ = line
+                for ch in word:
+                    char_cntr[ch] += 1
+
+    top_chars = [ch for ch, cnt in char_cntr.most_common() if cnt >= support]
+
+    char2idx = {ch: i + 2 for i, ch in enumerate(top_chars)}
+    char2idx['PAD'] = 0
+    char2idx['UKN'] = 1
+
+    return char2idx
 
 
 def io2bio(tags: List[str]) -> List[str]:
