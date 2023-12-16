@@ -67,7 +67,7 @@ def highlight_entities(tokens: List[str], ner_tags: List[str], font_size: int = 
             if prev_entity:
                 # previous word is finished TAG (because curr TAG is "B")
                 # --> insert TAG name in parenthesis before new word 
-                text += f"</span> ({prev_entity}) {token} "
+                text += f"</span> <span style='color:grey'>({prev_entity})</span> {token} "
             curr_entity = tag[2:]
             color = get_color_for_tag(curr_entity)
             text += f"<span style='color:{color}'>{token} "
@@ -76,7 +76,7 @@ def highlight_entities(tokens: List[str], ner_tags: List[str], font_size: int = 
             if prev_entity:
                 # previous word is finished TAG (because curr TAG is "O")
                 # --> insert TAG name in parenthesis before new word
-                text += f"</span> ({prev_entity}) {token} "
+                text += f"</span> <span style='color:grey'>({prev_entity})</span> {token} "
                 prev_entity = None
             else:
                 text += f"{token} "
@@ -85,9 +85,6 @@ def highlight_entities(tokens: List[str], ner_tags: List[str], font_size: int = 
 
     if prev_entity:
         text += f"</span> ({prev_entity}) "
-
-    # Highlight NER names in parenthesis
-    text = text.replace("(", "<span style='color:grey'>(").replace(")", ")</span>")
 
     # Add overall style for font size
     html_content = f"<div style='font-size:{font_size}px'>{text}</div>"
