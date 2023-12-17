@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from torchcrf import CRF
 from typing import List, Dict
-import torch.functional as F
+import torch.nn.functional as F
 
 
 class CharCNN(nn.Module):
@@ -10,7 +10,6 @@ class CharCNN(nn.Module):
                  char_vocab_size: int,
                  char_embed_size: int,
                  kernel_size: int,
-                 dropout: float
                  ) -> None:
         super(CharCNN, self).__init__()
 
@@ -19,18 +18,15 @@ class CharCNN(nn.Module):
             embedding_dim=char_embed_size, 
             padding_idx=0
         )
-        # TODO: n_filters!
-        # TODO: add more conv layers
-        self.char_conv1d = nn.Conv1d(
+        self.char_conv = nn.Conv1d(
             in_channels=char_embed_size, 
             out_channels=char_embed_size, 
             kernel_size=kernel_size, 
+            stride=1,
             padding=kernel_size // 2
         )
-        self.dropout = nn.Dropout(p=dropout)
-        # TODO: init weigths
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
         :x: [batch_size, max_seq_len, max_word_size]
         :return: [batch_size, max_seq_len, char_embed_size]
@@ -41,16 +37,14 @@ class CharCNN(nn.Module):
 
         x = self.char_embedding(x) # out: [batch_size, max_seq_len, max_word_len, char_embed_size]
         x = x.view(batch_size * max_seq_len, max_word_len, -1) # out: [batch_size * max_seq_len, max_word_len, char_embed_size]
-        
         # Conv1d takes in [batch, dim, seq_len]
         x = x.transpose(2, 1) # out: [batch_size * max_seq_len, char_embed_size, max_word_len]
         
-        output = self.char_conv1d(x) # out: [batch_size * max_seq_len, char_embed_size, max_word_len]
+        output = self.char_conv(x) # out: [batch_size * max_seq_len, char_embed_size, max_word_len]
         output = torch.max(output, dim=-1, keepdim=True)[0] # out: [batch_size * max_seq_len, char_embed_size, 1]
-        output = output.view(batch_size, max_seq_len, -1) # out: [batch_size, max_seq_len, char_embed_size * 1)
-        
+        output = output.view(batch_size, max_seq_len, -1) # out: [batch_size, max_seq_len, char_embed_size)
         return output
-
+    
 
 class CNN_BiLSTM_CRF(nn.Module):
     def __init__(self, 
@@ -74,7 +68,6 @@ class CNN_BiLSTM_CRF(nn.Module):
             char_vocab_size=char_voc_size,
             char_embed_size=char_embed_size,
             kernel_size=kernel_size,
-            dropout=dropout
         )
         self.lstm = nn.LSTM(
             input_size=word_embed_size+char_embed_size,
