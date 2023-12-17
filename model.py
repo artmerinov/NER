@@ -10,7 +10,6 @@ class CharCNN(nn.Module):
                  char_vocab_size: int,
                  char_embed_size: int,
                  kernel_size: int,
-                 max_word_len: int,
                  dropout: float
                  ) -> None:
         super(CharCNN, self).__init__()
@@ -21,20 +20,15 @@ class CharCNN(nn.Module):
             padding_idx=0
         )
         # TODO: n_filters!
+        # TODO: add more conv layers
         self.char_conv1d = nn.Conv1d(
             in_channels=char_embed_size, 
             out_channels=char_embed_size, 
             kernel_size=kernel_size, 
             padding=kernel_size // 2
         )
-        self.char_max_pool = nn.MaxPool1d(
-            kernel_size=max_word_len - kernel_size + 1
-        )
         self.dropout = nn.Dropout(p=dropout)
-        self.fc = nn.Linear(
-            in_features=char_embed_size*max_word_len, 
-            out_features=char_embed_size
-        )
+        # TODO: init weigths
 
     def forward(self, x):
         """
@@ -51,9 +45,9 @@ class CharCNN(nn.Module):
         # Conv1d takes in [batch, dim, seq_len]
         x = x.transpose(2, 1) # out: [batch_size * max_seq_len, char_embed_size, max_word_len]
         
-        output = self.char_conv1d(x)
-        output = output.view(batch_size, max_seq_len, -1) # out: [batch_size, max_seq_len, char_embed_size * max_word_len)
-        output = self.fc(output) # out: [batch_size, max_seq_len, char_embed_size]
+        output = self.char_conv1d(x) # out: [batch_size * max_seq_len, char_embed_size, max_word_len]
+        output = torch.max(output, dim=-1, keepdim=True)[0] # out: [batch_size * max_seq_len, char_embed_size, 1]
+        output = output.view(batch_size, max_seq_len, -1) # out: [batch_size, max_seq_len, char_embed_size * 1)
         
         return output
 
@@ -63,7 +57,6 @@ class CNN_BiLSTM_CRF(nn.Module):
                  word_embed_size: int, 
                  char_embed_size: int,
                  kernel_size: int,
-                 max_word_len: int,
                  lstm_hidden_size: int, 
                  dropout: float, 
                  word_voc_size: int, 
@@ -81,7 +74,6 @@ class CNN_BiLSTM_CRF(nn.Module):
             char_vocab_size=char_voc_size,
             char_embed_size=char_embed_size,
             kernel_size=kernel_size,
-            max_word_len=max_word_len,
             dropout=dropout
         )
         self.lstm = nn.LSTM(

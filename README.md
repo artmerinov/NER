@@ -11,5 +11,5 @@ Sequence tagging task.
 - [End-to-end Sequence Labeling via Bi-directional LSTM-CNNs-CRF](https://arxiv.org/pdf/1603.01354.pdf)
 
 <p align="left">
-  <img src="img/cnn_bilstm_crf.png" width="60%" />
+  <img src="img/cnn_bilstm_crf.png" width="70%" />
 </p>
