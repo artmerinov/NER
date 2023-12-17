@@ -2,7 +2,11 @@ tr_path: data/supervised/train.txt
 va_path: data/supervised/dev.txt
 te_path: data/supervised/test.txt
 
-seq_len: 64
+# preprocessing
+max_seq_len: 64
+max_word_len: 16
+
+# hyperparameters
 batch_size: 128
 lr: 0.001
 reg_lambda: 0.0001
@@ -10,6 +14,8 @@ max_grad_norm: 100
 num_epochs: 10
 
 # network architeecture
-embed_size: 128
-hidden_size: 128
+word_embed_size: 128
+char_embed_size: 128
+kernel_size: 3
+lstm_hidden_size: 128
 dropout: 0.5
