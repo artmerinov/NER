@@ -16,7 +16,7 @@ class Config:
 
 def set_random_seed(seed: int) -> None:
     """
-    Fixes random state for reproducibility. 
+    Fixes random state for reproducibility.
     """
     random.seed(seed)
     np.random.seed(seed)
@@ -26,9 +26,9 @@ def set_random_seed(seed: int) -> None:
     torch.backends.cudnn.benchmark = False
 
 
-def load_ner_config(file_path: str) -> Dict[str, int]:
+def load_json(file_path: str) -> Dict[str, int]:
     """
-    Loads tag dictionary.
+    Loads JSON file.
     """
     with open(file_path, 'r') as file:
         ner_config = json.load(file)
