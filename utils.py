@@ -3,7 +3,7 @@ import torch
 import random
 import json
 import numpy as np
-from typing import Dict
+from typing import Dict, List
 
 
 class Config:
@@ -31,5 +31,40 @@ def load_json(file_path: str) -> Dict[str, int]:
     Loads JSON file.
     """
     with open(file_path, 'r') as file:
-        ner_config = json.load(file)
-    return ner_config
+        json_file = json.load(file)
+    return json_file
+
+
+def io2bio(tags: List[str]) -> List[str]:
+    """
+    Convert list of tags in IO format into BIO format 
+    (the format expected by seqeval library).
+    """
+    converted_sequence = []
+    current_entity = None
+
+    for tag in tags:
+        if tag != 'O':
+            if current_entity is None:
+                converted_sequence.append('B-' + tag)
+                current_entity = tag
+            elif current_entity == tag:
+                converted_sequence.append('I-' + tag)
+            else:
+                converted_sequence.append('B-' + tag)
+                current_entity = tag
+        else:
+            converted_sequence.append('O')
+            current_entity = None
+            
+    return converted_sequence
+
+
+def make_padding(sequence: List[int], max_len: int = 100) -> List[int]:
+    """
+    Makes sequence to be fixed size using padding.
+    """
+    if len(sequence) >= max_len:
+        return sequence[:max_len]
+    sequence.extend([0]*(max_len - len(sequence)))
+    return sequence

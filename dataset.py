@@ -2,7 +2,9 @@ import torch
 from torch.utils.data import Dataset
 import pandas as pd
 from tqdm import tqdm
-from typing import List, Dict
+from typing import Dict
+
+from prepare_data import make_padding
 
 
 class NERDataset(Dataset):
@@ -54,7 +56,7 @@ class NERDataset(Dataset):
                 word = self.idx2word[word_id]
                 char_seq = [self.char2idx[ch] if ch in self.char2idx 
                             else self.char2idx['UKN'] for ch in word]
-                char_seq = padding(char_seq, max_len=self.max_word_len)
+                char_seq = make_padding(char_seq, max_len=self.max_word_len)
                 char_matrix.append(char_seq)
             char_matrix = torch.tensor(char_matrix).unsqueeze(0)
             char_tensor.append(char_matrix) 
@@ -67,91 +69,3 @@ class NERDataset(Dataset):
         and the 1st dim represents tag id.
         """
         return torch.tensor(self.data['tag_ids'])
-
-
-def io2df(filepath: str) -> pd.DataFrame:
-    """
-    Reads file in IO format and transform it into pandas dataframe.
-    """
-    id = 0
-
-    with open(filepath, "r", encoding="utf-8") as f:
-        
-        words = []
-        tags_fine_grained = []
-        tags_coarse_grained = []
-
-        records = []
-
-        for line in f:
-            line = line.strip().split()
-
-            if line:
-                word, tag_fine_grained = line
-                tag_coarse_grained = tag_fine_grained.split("-")[0]
-
-                words.append(word)
-                tags_fine_grained.append(tag_fine_grained)
-                tags_coarse_grained.append(tag_coarse_grained)
-
-            # end of sentence
-            elif words:
-                record = {
-                    "id": id, 
-                    "words": words, 
-                    "tags_fine_grained": tags_fine_grained, 
-                    'tags_coarse_grained': tags_coarse_grained
-                }
-                records.append(record)
-                words = []
-                tags_fine_grained = []
-                tags_coarse_grained = []
-                id += 1
-        
-        # take the last sentence
-        if words:
-            record = {
-                "id": id, 
-                "words": words, 
-                "tags_fine_grained": tags_fine_grained, 
-                'tags_coarse_grained': tags_coarse_grained
-            }
-            records.append(record)
-
-    titles = pd.DataFrame(records)
-    return titles
-
-
-def io2bio(tags: List[str]) -> List[str]:
-    """
-    Convert list of tags in IO format into BIO format 
-    (the format expected by seqeval).
-    """
-    converted_sequence = []
-    current_entity = None
-
-    for tag in tags:
-        if tag != 'O':
-            if current_entity is None:
-                converted_sequence.append('B-' + tag)
-                current_entity = tag
-            elif current_entity == tag:
-                converted_sequence.append('I-' + tag)
-            else:
-                converted_sequence.append('B-' + tag)
-                current_entity = tag
-        else:
-            converted_sequence.append('O')
-            current_entity = None
-            
-    return converted_sequence
-
-
-def padding(ids: List[int], max_len: int = 100) -> List[int]:
-    """
-    Makes sequence of ids to be fixed size using padding.
-    """
-    if len(ids) >= max_len:
-        return ids[:max_len]
-    ids.extend([0]*(max_len - len(ids)))
-    return ids
