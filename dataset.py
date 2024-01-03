@@ -37,17 +37,13 @@ class NERDataset(Dataset):
     
     def _get_word_ids_data(self) -> torch.Tensor:
         """
-        Creates a tensor of size [num_records, seq_len], 
-        e.g. [131767, 64], where 0 dim represents sentence id, 
-        the 1st dim represents word id.
+        Creates word ids tensor of size [max_seq_len].
         """
         return torch.tensor(self.data['word_ids'])
 
     def _get_char_ids_data(self) -> torch.Tensor:
         """
-        Creates a tensor of size [num_records, seq_len, char_seq_len], 
-        e.g. [131767, 64, 16], where 0 dim represents sentence id, 
-        the 1st dim represents word id, and the 2nd dim represents char id.
+        Creates char ids tensor of size [max_seq_len, max_word_len].
         """
         char_tensor = []
         for word_ids in tqdm(self.data['word_ids']):
@@ -64,8 +60,6 @@ class NERDataset(Dataset):
     
     def _get_tag_ids_data(self) -> torch.Tensor:
         """
-        Creates a tensor of size [num_records, seq_len], 
-        e.g. [131767, 64], where 0 dim represents sentence id
-        and the 1st dim represents tag id.
+        Creates tag ids tensor of size [max_seq_len].
         """
         return torch.tensor(self.data['tag_ids'])
