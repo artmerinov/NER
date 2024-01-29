@@ -40,9 +40,11 @@ def train():
     parser.add_argument('--word_embed_size', type=int, default=config.WORD_EMBED_SIZE, help='Embedding size of the word')
     parser.add_argument('--char_embed_size', type=int, default=config.CHAR_EMBED_SIZE, help='Embedding size of the char')
     parser.add_argument('--kernel_size', type=int, default=config.KERNEL_SIZE, help='Kernel size of 1D CNN for char representation')
-    parser.add_argument('--lstm_hidden_size', type=int, default=config.LSTM_HIDDEN_SIZE, help='Total embedding size of BiLSTM output')
-    parser.add_argument('--num_layers', type=int, default=config.NUM_LAYERS, help='Number of reccurent layers')
+    parser.add_argument('--rnn_cell', type=str, default=config.RNN_CELL, help='RNN cell: LSTM or GRU')
+    parser.add_argument('--rnn_hidden_size', type=int, default=config.RNN_HIDDEN_SIZE, help='Total embedding size of BiRNN output')
     parser.add_argument('--dropout', type=int, default=config.DROPOUT, help='Dropout probability')
+    parser.add_argument('--num_layers', type=int, default=config.NUM_LAYERS, help='Number of reccurent layers')
+    parser.add_argument('--skip_connection', type=bool, default=False, help="Whether use or not skip connection trick")
     
     # rewrite config
     config = parser.parse_args()
@@ -71,8 +73,11 @@ def train():
         word_embed_size  = config.word_embed_size,
         char_embed_size  = config.char_embed_size,
         kernel_size      = config.kernel_size,
-        lstm_hidden_size = config.lstm_hidden_size,
+        rnn_hidden_size  = config.rnn_hidden_size,
+        rnn_cell         = config.rnn_cell,
         dropout          = config.dropout,
+        num_layers       = config.num_layers,
+        skip_connection  = config.skip_connection,
         word_voc_size    = len(WORD2IDX),
         char_voc_size    = len(CHAR2IDX),
         tag_voc_size     = len(TAG2IDX),
@@ -88,23 +93,11 @@ def train():
         os.makedirs(runs_folder)
 
     experiment_folder = (
-        f'LSTM_'
-        f'max_seq_len_{config.max_seq_len}_'
-        f'max_word_len_{config.max_word_len}_'
-        f'word_support_{config.word_support}_'
-        f'char_support_{config.char_support}_'
-        f'batch_size_{config.batch_size}_'
-        f'num_epochs_{config.num_epochs}_'
-        f'lr_{config.lr}_'
-        f'reg_lambda_{config.reg_lambda}_'
-        f'max_grad_norm_{config.max_grad_norm}_'
-        f'word_embed_size_{config.word_embed_size}_'
-        f'char_embed_size_{config.char_embed_size}_'
-        f'kernel_size_{config.kernel_size}_'
-        f'lstm_hidden_size_{config.lstm_hidden_size}_'
-        f'dropout_{config.dropout}_'
-        f'num_layers_{config.num_layers}'
+        f'rnn_cell_{config.rnn_cell}_'
+        f'num_layers_{config.num_layers}_'
+        f'skip_connection_{config.skip_connection}'
     )
+
     if not os.path.exists(experiment_folder):
         os.makedirs(experiment_folder)
 
