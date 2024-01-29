@@ -21,4 +21,5 @@ word_embed_size: 128
 char_embed_size: 128
 kernel_size: 3
 lstm_hidden_size: 128
+num_layers: 1
 dropout: 0.5

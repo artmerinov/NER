@@ -12,7 +12,7 @@ from seqeval.metrics import classification_report
 from tokenizer import make_word_vocab, make_char_vocab
 from prepare_data import preprocess_raw_data
 from dataset import NERDataset
-from model import CNN_BiLSTM_CRF
+from model import CNN_BiRNN_CRF
 from utils import set_random_seed, Config, load_json, io2bio
 
 
@@ -41,6 +41,7 @@ def train():
     parser.add_argument('--char_embed_size', type=int, default=config.CHAR_EMBED_SIZE, help='Embedding size of the char')
     parser.add_argument('--kernel_size', type=int, default=config.KERNEL_SIZE, help='Kernel size of 1D CNN for char representation')
     parser.add_argument('--lstm_hidden_size', type=int, default=config.LSTM_HIDDEN_SIZE, help='Total embedding size of BiLSTM output')
+    parser.add_argument('--num_layers', type=int, default=config.NUM_LAYERS, help='Number of reccurent layers')
     parser.add_argument('--dropout', type=int, default=config.DROPOUT, help='Dropout probability')
     
     # rewrite config
@@ -66,7 +67,7 @@ def train():
 
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
-    model = CNN_BiLSTM_CRF(
+    model = CNN_BiRNN_CRF(
         word_embed_size  = config.word_embed_size,
         char_embed_size  = config.char_embed_size,
         kernel_size      = config.kernel_size,
@@ -85,6 +86,27 @@ def train():
     runs_folder = 'runs'
     if not os.path.exists(runs_folder):
         os.makedirs(runs_folder)
+
+    experiment_folder = (
+        f'LSTM_'
+        f'max_seq_len_{config.max_seq_len}_'
+        f'max_word_len_{config.max_word_len}_'
+        f'word_support_{config.word_support}_'
+        f'char_support_{config.char_support}_'
+        f'batch_size_{config.batch_size}_'
+        f'num_epochs_{config.num_epochs}_'
+        f'lr_{config.lr}_'
+        f'reg_lambda_{config.reg_lambda}_'
+        f'max_grad_norm_{config.max_grad_norm}_'
+        f'word_embed_size_{config.word_embed_size}_'
+        f'char_embed_size_{config.char_embed_size}_'
+        f'kernel_size_{config.kernel_size}_'
+        f'lstm_hidden_size_{config.lstm_hidden_size}_'
+        f'dropout_{config.dropout}_'
+        f'num_layers_{config.num_layers}'
+    )
+    if not os.path.exists(experiment_folder):
+        os.makedirs(experiment_folder)
 
     # Make optimizer
     optimizer = torch.optim.Adam(model.parameters(), lr=config.lr)

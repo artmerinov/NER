@@ -42,22 +42,23 @@ class CharCNN(nn.Module):
         
         output = self.char_conv(x) # out: [batch_size * max_seq_len, char_embed_size, max_word_len]
         output = torch.max(output, dim=-1, keepdim=True)[0] # out: [batch_size * max_seq_len, char_embed_size, 1]
-        output = output.view(batch_size, max_seq_len, -1) # out: [batch_size, max_seq_len, char_embed_size)
+        output = output.view(batch_size, max_seq_len, -1) # out: [batch_size, max_seq_len, char_embed_size]
         return output
     
 
-class CNN_BiLSTM_CRF(nn.Module):
+class CNN_BiRNN_CRF(nn.Module):
     def __init__(self, 
                  word_embed_size: int, 
                  char_embed_size: int,
                  kernel_size: int,
                  lstm_hidden_size: int, 
                  dropout: float, 
+                 num_layers: int,
                  word_voc_size: int, 
                  char_voc_size: int,
                  tag_voc_size: int,
                  ) -> None:
-        super(CNN_BiLSTM_CRF, self).__init__()
+        super(CNN_BiRNN_CRF, self).__init__()
 
         self.word_embedding = nn.Embedding(
             num_embeddings=word_voc_size, 
@@ -69,10 +70,18 @@ class CNN_BiLSTM_CRF(nn.Module):
             char_embed_size=char_embed_size,
             kernel_size=kernel_size,
         )
-        self.lstm = nn.LSTM(
+        # self.lstm = nn.LSTM(
+        #     input_size=word_embed_size+char_embed_size,
+        #     hidden_size=lstm_hidden_size // 2, 
+        #     num_layers=num_layers, 
+        #     bidirectional=True, 
+        #     batch_first=True,
+        #     bias=False
+        # )
+        self.gru = nn.GRU(
             input_size=word_embed_size+char_embed_size,
             hidden_size=lstm_hidden_size // 2, 
-            num_layers=1, 
+            num_layers=num_layers, 
             bidirectional=True, 
             batch_first=True,
             bias=False
@@ -98,10 +107,12 @@ class CNN_BiLSTM_CRF(nn.Module):
         word1_embeddings = self.word_embedding(word_ids) # out: [batch_size, max_seq_len, word_embed_size]
         word2_embeddings = self.char_embedding(char_ids) # out: [batch_size, max_seq_len, char_embed_size]
         embeddings = torch.cat([word1_embeddings, word2_embeddings], dim=-1) # out: [batch_size, max_seq_len, word_embed_size + char_embed_size]
-        outputs, hidden = self.lstm(embeddings)
-        outputs = self.dropout(outputs)
-        outputs = self.fc(outputs)
-        return outputs
+        # outputs, hidden = self.lstm(embeddings)
+        rnn_outputs, hidden = self.gru(embeddings)
+        rnn_outputs = self.dropout(rnn_outputs)
+        # outputs = self.fc(outputs)
+        emission_scores = self.fc(rnn_outputs + word2_embeddings) # skip-connection: they have the same dim
+        return emission_scores
     
     def decode(self, emission_scores: torch.Tensor) -> List[float]:
         """
