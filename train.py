@@ -40,7 +40,7 @@ def train():
     
     parser.add_argument('--word_embed_size', type=int, default=config.WORD_EMBED_SIZE, help='Embedding size of the word')
     parser.add_argument('--char_embed_size', type=int, default=config.CHAR_EMBED_SIZE, help='Embedding size of the char')
-    parser.add_argument('--kernel_size', type=int, default=config.KERNEL_SIZE, help='Kernel size of 1D CNN for char representation')
+    parser.add_argument('--char_kernel_size', type=int, default=config.CHAR_KERNEL_SIZE, help='Kernel size of CNN for char representation')
     parser.add_argument('--rnn_cell', type=str, default=config.RNN_CELL, help='RNN cell: LSTM or GRU')
     parser.add_argument('--rnn_hidden_size', type=int, default=config.RNN_HIDDEN_SIZE, help='Total embedding size of BiRNN output')
     parser.add_argument('--dropout', type=int, default=config.DROPOUT, help='Dropout probability')
@@ -73,9 +73,9 @@ def train():
     model = CNN_BiRNN_CRF(
         word_embed_size  = config.word_embed_size,
         char_embed_size  = config.char_embed_size,
-        kernel_size      = config.kernel_size,
-        rnn_hidden_size  = config.rnn_hidden_size,
+        char_kernel_size = config.char_kernel_size,
         rnn_cell         = config.rnn_cell,
+        rnn_hidden_size  = config.rnn_hidden_size,
         dropout          = config.dropout,
         num_layers       = config.num_layers,
         skip_connection  = config.skip_connection,
@@ -161,7 +161,6 @@ def train():
 
                 # Forward pass: compute predicted output by passing input to the model
                 va_emission_scores = model(word_ids=va_xs, char_ids=va_cs).to(device) # [batch_size, max_seq_len]
-                va_preds = torch.tensor(model.decode(va_emission_scores)).to(device)
                 va_loss = model.loss_fn(emission_scores=va_emission_scores, tags=va_ys, mask=va_mask)
                 va_losses.append(va_loss.item())
 
@@ -174,6 +173,7 @@ def train():
                     true_tags = io2bio(true_tags)
                     batch_trues.append(true_tags)
 
+                va_preds = torch.tensor(model.decode(va_emission_scores)).to(device)
                 for row_id, pred in enumerate(va_preds):
                     # do not count padding
                     pred_tags = pred[va_mask[row_id]]
