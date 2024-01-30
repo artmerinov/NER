@@ -20,7 +20,7 @@ max_grad_norm: 100
 word_embed_size: 128
 char_embed_size: 128
 kernel_size: 3
-rnn_cell: LSTM
+rnn_cell: GRU
 rnn_hidden_size: 128
 num_layers: 1
 dropout: 0.5

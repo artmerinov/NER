@@ -3,6 +3,7 @@ import json
 import argparse
 from tqdm import tqdm
 import numpy as np
+from datetime import datetime
 
 import torch
 from torch.utils.data import DataLoader
@@ -92,20 +93,16 @@ def train():
     if not os.path.exists(runs_folder):
         os.makedirs(runs_folder)
 
-    experiment_folder = (
-        f'rnn_cell_{config.rnn_cell}_'
-        f'num_layers_{config.num_layers}_'
-        f'skip_connection_{config.skip_connection}'
-    )
-
-    if not os.path.exists(experiment_folder):
-        os.makedirs(experiment_folder)
+    experiment_folder = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    if not os.path.exists(f'{runs_folder}/{experiment_folder}'):
+        os.makedirs(f'{runs_folder}/{experiment_folder}')
 
     # Make optimizer
     optimizer = torch.optim.Adam(model.parameters(), lr=config.lr)
 
     # Make tensorboard writer
-    writer = tensorboard.SummaryWriter(log_dir='runs')
+    writer = tensorboard.SummaryWriter(log_dir=f'{runs_folder}/{experiment_folder}')
+    writer.add_text('Run parameters', " ".join([f"{k}={v}" for k,v in config.__dict__.items()]))
 
     for epoch in range(config.num_epochs):
 
