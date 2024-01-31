@@ -23,7 +23,7 @@ class CharRNN(nn.Module):
                 num_layers=1, 
                 bidirectional=True, 
                 batch_first=True,
-                bias=False
+                bias=True
             )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -50,6 +50,7 @@ class CharRNN(nn.Module):
         
         output = torch.max(rnn_outputs, dim=-1, keepdim=True)[0] 
         # max pooling among max_word_len dimention
+        # (collapse char dimentions to represent a word)
         # [batch_size * max_seq_len, char_embed_size, 1]
         # print(output.size()) # [128*64, 128, 1]
         
@@ -78,7 +79,9 @@ class CharCNN(nn.Module):
             out_channels=char_embed_size, # same
             kernel_size=char_kernel_size, 
             stride=1,
-            padding=char_kernel_size // 2
+            padding=char_kernel_size // 2,
+            # bias=False,
+            bias=True,
         )
         
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -109,6 +112,7 @@ class CharCNN(nn.Module):
         
         output = torch.max(output, dim=-1, keepdim=True)[0] 
         # max pooling among max_word_len dimention
+        # (collapse char dimentions to represent a word)
         # out: [batch_size * max_seq_len, char_embed_size, 1]
         # print(output.size()) # [128*64, 128, 1]
         
@@ -150,6 +154,9 @@ class CNN_BiRNN_CRF(nn.Module):
         #     char_vocab_size=char_voc_size,
         #     char_embed_size=char_embed_size,
         # )
+        # self.batch_norm = nn.BatchNorm1d(
+        #     num_features=word_embed_size + char_embed_size
+        # )
         if rnn_cell == "LSTM":
             self.rnn = nn.LSTM(
                 input_size=word_embed_size+char_embed_size,
@@ -157,7 +164,8 @@ class CNN_BiRNN_CRF(nn.Module):
                 num_layers=num_layers, 
                 bidirectional=True, 
                 batch_first=True,
-                bias=False
+                # bias=False,
+                bias=True,
             )
         elif rnn_cell == "GRU":
             self.rnn = nn.GRU(
@@ -166,7 +174,8 @@ class CNN_BiRNN_CRF(nn.Module):
                 num_layers=num_layers, 
                 bidirectional=True, 
                 batch_first=True,
-                bias=False
+                # bias=False,
+                bias=True,
             )
         self.dropout = nn.Dropout(dropout)
         self.fc = nn.Linear(
@@ -192,6 +201,7 @@ class CNN_BiRNN_CRF(nn.Module):
         # out: [batch_size, max_seq_len, char_embed_size]
         embeddings = torch.cat([word1_embeddings, word2_embeddings], dim=-1) 
         # out: [batch_size, max_seq_len, word_embed_size + char_embed_size]
+        # embeddings = self.batch_norm(embeddings.permute(0, 2, 1)).permute(0, 2, 1)
 
         rnn_outputs, hidden = self.rnn(embeddings)
         rnn_outputs = self.dropout(rnn_outputs)
@@ -238,7 +248,15 @@ class CNN_BiRNN_CRF(nn.Module):
         for name, p in learnable_named_parameters:
             if p.dim() > 1:
                 nn.init.xavier_uniform_(p)
-                print(f'{name:<40} initialized w with Xavier {" "*10} parameters #: {p.numel()}', flush=True)
+                print(f'{name:<40} init W with Xavier {" "*10} # params: {p.numel()}', flush=True)
             else:
                 nn.init.zeros_(p)
-                print(f'{name:<40} initialized b with zero   {" "*10} parameters #: {p.numel()}', flush=True)
+                print(f'{name:<40} init b with zero   {" "*10} # params: {p.numel()}', flush=True)
+
+        # Set forget gate bias high to improve gradients flow
+        # https://discuss.pytorch.org/t/set-forget-gate-bias-of-lstm/1745/3
+        for names in self.rnn._all_weights:
+            for name in filter(lambda n: "bias" in n,  names):
+                bias = getattr(self.rnn, name)
+                n = bias.size(0)
+                bias.data[n//4:n//2].fill_(1.0)

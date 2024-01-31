@@ -36,7 +36,8 @@ def train():
     parser.add_argument('--num_epochs', type=int, default=config.NUM_EPOCHS, help='Number of epochs')
     parser.add_argument('--lr', type=float, default=config.LR, help='Learning rate')
     parser.add_argument('--reg_lambda', type=float, default=config.REG_LAMBDA, help='Regularization coefficient for the weights')
-    parser.add_argument('--max_grad_norm', type=int, default=config.MAX_GRAD_NORM, help='Max norm of gradients in order to clip them')
+    parser.add_argument('--max_grad_norm', type=int, default=config.MAX_GRAD_NORM, help='Max norm of gradients to clip')
+    parser.add_argument('--max_grad_value', type=int, default=config.MAX_GRAD_VALUE, help='Max value of gradients to clip')
     
     parser.add_argument('--word_embed_size', type=int, default=config.WORD_EMBED_SIZE, help='Embedding size of the word')
     parser.add_argument('--char_embed_size', type=int, default=config.CHAR_EMBED_SIZE, help='Embedding size of the char')
@@ -138,7 +139,9 @@ def train():
             total_loss.backward()
             
             # Clip computed gradients
-            torch.nn.utils.clip_grad_norm_(parameters=model.parameters(), max_norm=config.max_grad_norm)
+            for name, p in model.named_parameters():
+                # torch.nn.utils.clip_grad_norm_(parameters=p, max_norm=config.MAX_GRAD_NORM)
+                torch.nn.utils.clip_grad_value_(parameters=p, clip_value=config.MAX_GRAD_VALUE)
             
             # Optimize: update the weights using Adam optimizer
             optimizer.step()
