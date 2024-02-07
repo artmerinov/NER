@@ -222,7 +222,8 @@ class CNN_BiRNN_CRF(nn.Module):
         
     def loss_fn(self, emission_scores: torch.Tensor, tags: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
         """
-        Calculates negative log-likelihood loss (NLL).
+        Compute the conditional negative log likelihood (NLL) 
+        of a sequence of tags given emission scores.
         
         The forward computation of CRF class computes the log likelihood of the 
         given sequence of tags and emission score tensor. Therefore, we need to 
